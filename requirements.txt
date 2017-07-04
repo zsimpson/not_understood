@@ -1,2 +1,3 @@
 plumbum
 unidecode
+pandas
