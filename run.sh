@@ -14,9 +14,10 @@
 #echo "End time"
 #date
 
+# TODO Shard this? At least use more than one core
 echo "Start time"
 date
-python ./find_occurances.py
+python -u ./find_occurances.py
 echo "End time"
 date
 

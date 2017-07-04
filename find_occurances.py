@@ -65,20 +65,19 @@ def scan_article(text):
 
 article_count = 0
 occurance_count = 0
-scan_count = 10000
 
 for fp in (local.cwd / input_folder).walk():
     if not fp.is_file():
         continue
 
-    if article_count > scan_count:
-        break
     f = fp.open()
     for line_i, line in enumerate(f.readlines()):
-        if article_count > scan_count:
-            break
+        if article_count % 10000 == 0:
+            print article_count
+
         j = json.loads(line)
         occurances = scan_article(j['text'])
+        article_count += 1
         if len(occurances) > 0:
             results_file.write(
                 json.dumps({
@@ -90,7 +89,6 @@ for fp in (local.cwd / input_folder).walk():
                     'z_occurances': occurances,
                 }, sort_keys=True) + '\n'
             )
-            article_count += 1
             occurance_count += len(occurances)
             results_file.flush()
     f.close()
