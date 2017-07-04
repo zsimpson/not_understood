@@ -14,7 +14,7 @@
 #echo "End time"
 #date
 
-# TODO Shard this? At least use more than one core
+# Run time, about 16 minutes on one core
 echo "Start time"
 date
 python -u ./find_occurances.py

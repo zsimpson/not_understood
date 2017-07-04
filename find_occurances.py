@@ -31,6 +31,11 @@ phrases = [
     'are obscure'
 ]
 
+# TODO, others:
+# is not understood
+# are not understood
+
+
 
 def scan_article(text):
     text = text.replace('\n', ' ')
@@ -95,5 +100,5 @@ for fp in (local.cwd / input_folder).walk():
 
 results_file.close()
 
-print '%d articles scanned', article_count
-print '%d occurances', occurance_count
+print 'articles scanned', article_count
+print 'occurances', occurance_count
