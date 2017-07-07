@@ -44,6 +44,12 @@ class WordBag(dict):
             result[word] = other.get(word, 0.0) * self.get(word, 0.0)
         return result
 
+    def __div__(self, scalar):
+        result = WordBag()
+        for word, value in self.iteritems():
+            result[word] = self[word] / scalar
+        return result
+
     def accumulate_text(self, text):
         text = unidecode(text.lower())
         for word in re.split("[^a-z']+", text):
@@ -76,14 +82,13 @@ class TfIdfAnalyzer(object):
                 self.doc_names += [doc_name]
                 for word, count in tf.iteritems():
                     self.doc_count_by_word[word] += 1
-                self.tf_by_doc[doc_name] = tf
+                self.tf_by_doc[doc_name] = tf / float(total_words)
             else:
                 self.tf_by_doc[doc_name] = WordBag()
 
         # COMPUTE the idf
         for word, count in self.doc_count_by_word.iteritems():
-            val = math.log(float(doc_count) / (1.0 + float(count)))
-            self.idf[word] = val
+            self.idf[word] = math.log(float(doc_count) / (1.0 + float(count)))
 
     def tfidf_by_doc(self, doc_name):
         # COMPUTE the tf-idf for each document
@@ -155,5 +160,5 @@ for doc_name in all_doc_iter.experiment_docs:
 # COMPUTE 
 tfidf_for_experiment = experiment_wb * tfidf_analyzer.idf
 
-for word, score in tfidf_for_experiment.by_rank()[0:10]:
+for word, score in tfidf_for_experiment.by_rank()[0:100]:
     print word, score
