@@ -1,5 +1,4 @@
 plumbum
 unidecode
 pandas
-gensim
 nltk
