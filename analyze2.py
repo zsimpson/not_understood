@@ -12,7 +12,12 @@ from unidecode import unidecode
 import pickle
 import nltk
 import pandas as pd
+import sys
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+import pylab
+matplotlib.style.use('ggplot')
 from collections import Counter
 sno = nltk.stem.SnowballStemmer('english')
 
@@ -55,8 +60,8 @@ def jsoncr_iter(filename, fields, subsample_count):
             break
 
 
-counts_filename = 'generated_data/bow_counts_unstemmed.pickle'
-regen = False
+counts_filename = 'generated_data/bow_counts_unstemmed_phrase1.pickle'
+regen = True
 if regen:
     subsample_doc_count = 9e9
     corpus_titles = []
@@ -74,9 +79,10 @@ if regen:
     experiment_titles = []
     experiment_bow = BOW()
     for title, text in jsoncr_iter('generated_data/experiment_articles.jsoncr', ['title', 'text'], subsample_doc_count):
-        experiment_titles += [title]
-        bow = BOW.from_text(text)
-        experiment_bow.update(bow)
+        if u'not well understood' in text:
+            experiment_titles += [title]
+            bow = BOW.from_text(text)
+            experiment_bow.update(bow)
 
     with open(counts_filename, 'w') as f:
         pickle.dump(
@@ -99,6 +105,8 @@ else:
 
 
 corpus_df = corpus_bow.to_df()
+corpus_df.sort_values(by='word_count', ascending=False, inplace=True)
+corpus_df.drop(corpus_df.index[:500], inplace=True)
 
 corpus_doc_count_df = corpus_doc_count.to_df()
 corpus_doc_count_df = corpus_doc_count_df[corpus_doc_count_df.word_count > 1]
@@ -106,16 +114,34 @@ corpus_doc_count_df = corpus_doc_count_df[corpus_doc_count_df.word_count > 1]
 experiment_df = experiment_bow.to_df()
 doc_count = len(corpus_titles)
 
-merged = pd.merge(corpus_df, corpus_doc_count_df, on='word', how='right', suffixes=['_tf', '_df'])
+merged = pd.merge(corpus_df, corpus_doc_count_df, on='word', how='inner', suffixes=['_tf', '_df'])
 merged['idf'] = np.log(doc_count / (1 + merged.word_count_df))
 
-# TODO Sanity check that the tdidf of the control is mostly small
+# Sanity check that the tdidf of the control is mostly small
+merged['tfidf'] = merged.word_count_tf * merged.idf
+merged.sort_values(by='tfidf', ascending=False, inplace=True)
+print merged[0:30]
+# hist = merged.tfidf[0:500]
+# pos = pylab.arange(500)+.5
+# plt.barh(pos, hist)
+# plt.savefig('control.png')
+# plt.show()
 
-tfidf = pd.merge(merged, experiment_df, on='word', how='right')
+baseline = merged.tfidf.iloc[0] * 1.3
+print 'baseline', baseline
+tfidf = pd.merge(merged, experiment_df, on='word', how='inner')
 tfidf.rename(columns={'word_count': 'experiment_tf'}, inplace=True)
 tfidf['tfidf'] = tfidf.experiment_tf * tfidf.idf
 tfidf.sort_values(by='tfidf', ascending=False, inplace=True)
-print tfidf[0:10]
+for i, row in tfidf[tfidf.tfidf > baseline].iterrows():
+    print row.word, row.tfidf
+
+# print tfidf[0:30]
+# hist = tfidf.tfidf[0:500]
+# pos = pylab.arange(500)+.5
+# plt.barh(pos, hist)
+# plt.savefig('experiment.png')
+# plt.show()
 
 '''
 corpus_total_words = corpus_df.word_count.sum()
